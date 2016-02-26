@@ -1,0 +1,15 @@
+Source: wasta-multidesktop-xenial
+Section: utils
+Priority: extra
+Maintainer: Rik Shaw <rikshaw76@gmail.com>
+Build-Depends: debhelper (>= 8.0.0)
+Standards-Version: 3.9.5
+Homepage: https://github.com/wasta-linux/wasta-multidesktop-xenial
+
+Package: wasta-multidesktop-xenial
+Architecture: all
+Depends: lightdm, wasta-core-xenial, wmctrl, ${shlibs:Depends}, ${misc:Depends}
+Description: Wasta-Linux MultiDesktop
+ Ensures cross-desktop compatibility between Cinnamon, Unity, Gnome-Shell,
+ and XFCE desktops. A script is executed on login to make necessary
+ adjustments based on detected window manager.
