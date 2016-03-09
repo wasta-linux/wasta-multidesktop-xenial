@@ -24,6 +24,7 @@
 #   2015-08-04 rik: correcting "NoDisplay" to "Hidden" for autostart items
 #       for xfce login
 #   2016-02-21 rik: modifying for 16.04 with Ubuntu Unity base
+#   2016-03-09 rik: adding nemo/nautilus defaults.list toggling
 #
 # ==============================================================================
 
@@ -95,6 +96,14 @@ then
 
         # Ensure Nemo not showing "location entry" (text entry), but rather "breadcrumbs"
         su "$USER" -c 'gsettings set org.nemo.preferences show-location-entry false'
+
+        # Ensure Nemo default folder handler
+        sed -i \
+            -e 's@\(inode/directory\)=.*@\1=nemo.desktop@' \
+            -e 's@\(application/x-gnome-saved-search\)=.*@\1=nemo.desktop@' \
+            /etc/gnome/defaults.list \
+            /usr/share/applications/defaults.list \
+            /usr/share/gnome/applications/defaults.list
     fi
 
     # --------------------------------------------------------------------------
@@ -194,6 +203,14 @@ then
 
         # Ensure Nemo not showing "location entry" (text entry), but rather "breadcrumbs"
         su "$USER" -c 'gsettings set org.nemo.preferences show-location-entry false'
+
+        # Ensure Nemo default folder handler
+        sed -i \
+            -e 's@\(inode/directory\)=.*@\1=nemo.desktop@' \
+            -e 's@\(application/x-gnome-saved-search\)=.*@\1=nemo.desktop@' \
+            /etc/gnome/defaults.list \
+            /usr/share/applications/defaults.list \
+            /usr/share/gnome/applications/defaults.list
     fi
 
     # --------------------------------------------------------------------------
@@ -317,6 +334,14 @@ else
         # Allow Nautilus to draw the desktop
         su "$USER" -c 'gsettings set org.gnome.desktop.background show-desktop-icons true'
         su "$USER" -c 'gsettings set org.gnome.desktop.background draw-background true'
+
+        # Ensure Nautilus default folder handler
+        sed -i \
+            -e 's@\(inode/directory\)=.*@\1=nautilus-folder-handler.desktop@' \
+            -e 's@\(application/x-gnome-saved-search\)=.*@\1=nautilus-folder-handler.desktop@' \
+            /etc/gnome/defaults.list \
+            /usr/share/applications/defaults.list \
+            /usr/share/gnome/applications/defaults.list
     fi
 
     if [ -e /usr/share/applications/software-properties-gnome.desktop ];

@@ -1,3 +1,10 @@
+wasta-multidesktop-xenial (0.9.0) xenial; urgency=medium
+
+  * wasta-login.sh: toggle nemo/nautilus as default folder handler in
+    defaults.list files
+
+ -- Rik Shaw <rikshaw76@gmail.com>  Wed, 09 Mar 2016 09:58:18 +0300
+
 wasta-multidesktop-xenial (0.1.0) xenial; urgency=low
 
   * initial release
