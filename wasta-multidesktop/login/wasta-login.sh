@@ -104,6 +104,12 @@ then
             /etc/gnome/defaults.list \
             /usr/share/applications/defaults.list \
             /usr/share/gnome/applications/defaults.list
+
+        # Nautilus may be active: kill (will not error if not found)
+        su "$USER" -c 'killall nautilus || true;'
+
+        # Ensure Nemo Started
+        su "$USER" -c 'nemo -n &'
     fi
 
     # --------------------------------------------------------------------------
@@ -137,10 +143,6 @@ then
         # Prevent Nautilus from drawing the desktop
         su "$USER" -c 'gsettings set org.gnome.desktop.background show-desktop-icons false'
         su "$USER" -c 'gsettings set org.gnome.desktop.background draw-background false'
-
-        # Nautilus may be active: kill (will not error if not found)
-        su "$USER" -c 'killall nautilus || true;'
-
     fi
 
     if [ -e /usr/share/applications/software-properties-gnome.desktop ];
@@ -211,6 +213,13 @@ then
             /etc/gnome/defaults.list \
             /usr/share/applications/defaults.list \
             /usr/share/gnome/applications/defaults.list
+
+        # Nautilus may be active: kill (will not error if not found)
+        su "$USER" -c 'killall nautilus || true;'
+
+        # Ensure Nemo Started
+        su "$USER" -c 'nemo -n &'
+
     fi
 
     # --------------------------------------------------------------------------
@@ -302,6 +311,8 @@ else
         # prevent nemo from drawing the desktop
         su "$USER" -c 'gsettings set org.nemo.desktop show-desktop-icons false'
 
+        # Nemo may be active: kill (will not error if not found)
+        su "$USER" -c 'killall nemo || true;'
     fi
     # --------------------------------------------------------------------------
     # UNITY/GNOME Settings
@@ -342,6 +353,9 @@ else
             /etc/gnome/defaults.list \
             /usr/share/applications/defaults.list \
             /usr/share/gnome/applications/defaults.list
+
+        # Ensure Nautilus Started
+        su "$USER" -c 'nautilus -n &'
     fi
 
     if [ -e /usr/share/applications/software-properties-gnome.desktop ];
