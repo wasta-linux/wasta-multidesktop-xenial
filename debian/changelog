@@ -1,3 +1,10 @@
+wasta-multidesktop-xenial (0.9.1) xenial; urgency=medium
+
+  * wasta-login.sh: kill nemo / nautilus based on detected desktop (nemo was
+    starting in Unity)
+
+ -- Rik Shaw <rikshaw76@gmail.com>  Wed, 09 Mar 2016 14:52:22 +0300
+
 wasta-multidesktop-xenial (0.9.0) xenial; urgency=medium
 
   * wasta-login.sh: toggle nemo/nautilus as default folder handler in
