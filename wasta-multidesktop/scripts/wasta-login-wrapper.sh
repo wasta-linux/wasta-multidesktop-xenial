@@ -12,6 +12,6 @@
 #
 # ==============================================================================
 
-/bin/bash -c "/usr/share/wasta-multidesktop/login/wasta-login.sh $*" &
+/bin/bash -c "/usr/share/wasta-multidesktop/scripts/wasta-login.sh $*" &
 
 exit 0

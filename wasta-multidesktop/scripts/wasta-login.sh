@@ -25,6 +25,11 @@
 #       for xfce login
 #   2016-02-21 rik: modifying for 16.04 with Ubuntu Unity base
 #   2016-03-09 rik: adding nemo/nautilus defaults.list toggling
+#   2016-03-16 rik: wasta-logout.sh now sets defaults to nautilus each time,
+#       adjusting processing based on this. (setting to nautilus on logout is
+#       the only way I have been able to NOT have Unity get hung at login...
+#       other techniques for re-starting Nautilus / Unity / etc. all break
+#       Unity).
 #
 # ==============================================================================
 
@@ -108,8 +113,11 @@ then
         # Nautilus may be active: kill (will not error if not found)
         su "$USER" -c 'killall nautilus || true;'
 
-        # Ensure Nemo Started
-        su "$USER" -c 'nemo -n &'
+        if ! [ "$(pidof nemo)" ];
+        then
+            # Ensure Nemo Started
+            su "$USER" -c 'nemo -n &'
+        fi
     fi
 
     # --------------------------------------------------------------------------
@@ -217,8 +225,11 @@ then
         # Nautilus may be active: kill (will not error if not found)
         su "$USER" -c 'killall nautilus || true;'
 
-        # Ensure Nemo Started
-        su "$USER" -c 'nemo -n &'
+        if ! [ "$(pidof nemo)" ];
+        then
+            # Ensure Nemo Started
+            su "$USER" -c 'nemo -n &'
+        fi
 
     fi
 
@@ -354,8 +365,12 @@ else
             /usr/share/applications/defaults.list \
             /usr/share/gnome/applications/defaults.list
 
+        # rik: IF Nautlius not already started, below will sort of "HANG" Unity
+        #     so not doing here: instead, using wasta-logout.sh to set defaults
+        #     to Nautilus, meaning that Nautilus *should* be ready to start
+        #     each time.
         # Ensure Nautilus Started
-        su "$USER" -c 'nautilus -n &'
+        #su "$USER" -c 'nautilus -n &'
     fi
 
     if [ -e /usr/share/applications/software-properties-gnome.desktop ];
