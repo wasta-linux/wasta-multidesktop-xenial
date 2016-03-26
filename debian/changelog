@@ -1,3 +1,9 @@
+wasta-multidesktop-xenial (0.9.3) xenial; urgency=medium
+
+  * wasta-logout.sh: syncing cinnamon / gnome backgrounds on logout
+
+ -- Rik Shaw <rikshaw76@gmail.com>  Sat, 26 Mar 2016 09:32:19 +0300
+
 wasta-multidesktop-xenial (0.9.2) xenial; urgency=medium
 
   * adding wasta-logout.sh: Nautilus will now be set as the default desktop
