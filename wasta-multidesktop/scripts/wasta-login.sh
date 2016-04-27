@@ -30,6 +30,7 @@
 #       the only way I have been able to NOT have Unity get hung at login...
 #       other techniques for re-starting Nautilus / Unity / etc. all break
 #       Unity).
+#   2016-04-27 rik: nemo-compare-preferences.desktop handling based on desktop
 #
 # ==============================================================================
 
@@ -118,6 +119,12 @@ then
             # Ensure Nemo Started
             su "$USER" -c 'nemo -n &'
         fi
+    fi
+
+    if [ -e /usr/share/applications/nemo-compare-preferences.desktop ];
+    then
+        desktop-file-edit --remove-key=NoDisplay \
+            /usr/share/applications/nemo-compare-preferences.desktop || true;
     fi
 
     # --------------------------------------------------------------------------
@@ -233,6 +240,12 @@ then
 
     fi
 
+    if [ -e /usr/share/applications/nemo-compare-preferences.desktop ];
+    then
+        desktop-file-edit --remove-key=NoDisplay \
+            /usr/share/applications/nemo-compare-preferences.desktop || true;
+    fi
+
     # --------------------------------------------------------------------------
     # UNITY/GNOME Settings
     # --------------------------------------------------------------------------
@@ -324,6 +337,12 @@ else
 
         # Nemo may be active: kill (will not error if not found)
         su "$USER" -c 'killall nemo || true;'
+    fi
+
+    if [ -e /usr/share/applications/nemo-compare-preferences.desktop ];
+    then
+        desktop-file-edit --set-key=NoDisplay --set-value=true \
+            /usr/share/applications/nemo-compare-preferences.desktop || true;
     fi
     # --------------------------------------------------------------------------
     # UNITY/GNOME Settings

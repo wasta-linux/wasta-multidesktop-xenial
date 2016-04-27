@@ -1,3 +1,9 @@
+wasta-multidesktop-xenial (1.0.1) xenial; urgency=medium
+
+  * wasta-login.sh: nemo-compare-preferences processing based on desktop
+
+ -- Rik Shaw <rikshaw76@gmail.com>  Wed, 27 Apr 2016 14:47:38 +0300
+
 wasta-multidesktop-xenial (0.9.3) xenial; urgency=medium
 
   * wasta-logout.sh: syncing cinnamon / gnome backgrounds on logout

@@ -13,6 +13,11 @@
 # All Session Fixes
 # ------------------------------------------------------------------------------
 
+# 2016-03-16 rik: Unity hangs up if Nemo set to draw desktop, but Cinnamon
+#   does not have issues if Nautilus set to handle desktop.  So, need to set
+#   Nautilus as desktop handler on logout all the time, requiring Cinnamon
+#   to set it back to Nemo each time on login.
+
 # Prevent Nemo from drawing the desktop
 su "$USER" -c 'gsettings set org.nemo.desktop show-desktop-icons false'
 
