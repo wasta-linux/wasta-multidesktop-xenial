@@ -160,6 +160,12 @@ then
         su "$USER" -c 'gsettings set org.gnome.desktop.background draw-background false'
     fi
 
+    if [ -e /usr/share/applications/nautilus-compare-preferences.desktop ];
+    then
+        desktop-file-edit --set-key=NoDisplay --set-value=true \
+            /usr/share/applications/nautilus-compare-preferences.desktop || true;
+    fi
+
     if [ -e /usr/share/applications/software-properties-gnome.desktop ];
     then
         desktop-file-edit --set-key=NoDisplay --set-value=true \
@@ -284,6 +290,12 @@ then
 
     fi
 
+    if [ -e /usr/share/applications/nautilus-compare-preferences.desktop ];
+    then
+        desktop-file-edit --set-key=NoDisplay --set-value=true \
+            /usr/share/applications/nautilus-compare-preferences.desktop || true;
+    fi
+
     if [ -e /usr/share/applications/software-properties-gnome.desktop ];
     then
         desktop-file-edit --set-key=NoDisplay --set-value=true \
@@ -390,6 +402,12 @@ else
         #     each time.
         # Ensure Nautilus Started
         #su "$USER" -c 'nautilus -n &'
+    fi
+
+    if [ -e /usr/share/applications/nautilus-compare-preferences.desktop ];
+    then
+        desktop-file-edit --remove-key=NoDisplay \
+            /usr/share/applications/nautilus-compare-preferences.desktop || true;
     fi
 
     if [ -e /usr/share/applications/software-properties-gnome.desktop ];

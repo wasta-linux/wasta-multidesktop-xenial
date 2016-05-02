@@ -1,3 +1,9 @@
+wasta-multidesktop-xenial (1.0.2) xenial; urgency=medium
+
+  * wasta-login.sh: nautilus-compare-preferences based on desktop
+
+ -- Rik Shaw <rikshaw76@gmail.com>  Mon, 02 May 2016 15:56:47 +0300
+
 wasta-multidesktop-xenial (1.0.1) xenial; urgency=medium
 
   * wasta-login.sh: nemo-compare-preferences processing based on desktop
