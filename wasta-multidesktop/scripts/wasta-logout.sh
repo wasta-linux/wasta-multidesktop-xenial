@@ -6,8 +6,15 @@
 #
 #   2016-03-16 rik: initial script for 16.04
 #   2016-03-26 rik: syncing user's cinnamon / gnome backgrounds on logout
+#   2016-05-03 rik: double-quote variables when replacing backgrounds
 #
 # ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Store current backgrounds
+# ------------------------------------------------------------------------------
+CINNAMON_BACKGROUND=$(su "$USER" -c 'gsettings get org.cinnamon.desktop.background picture-uri')
+GNOME_BACKGROUND=$(su "$USER" -c 'gsettings get org.gnome.desktop.background picture-uri')
 
 # ------------------------------------------------------------------------------
 # All Session Fixes
@@ -40,12 +47,10 @@ MUFFIN_ACTIVE=$(wmctrl -m | grep Muffin)
 if [ "$MUFFIN_ACTIVE" ];
 then
     # sync Cinnamon background to GNOME background
-    CINNAMON_BACKGROUND=$(su "$USER" -c 'gsettings get org.cinnamon.desktop.background picture-uri')
-    su "$USER" -c 'gsettings set org.gnome.desktop.background picture-uri $CINNAMON_BACKGROUND'
+    su "$USER" -c "gsettings set org.gnome.desktop.background picture-uri $CINNAMON_BACKGROUND"
 else
     # sync GNOME background to Cinnamon background
-    GNOME_BACKGROUND=$(su "$USER" -c 'gsettings get org.gnome.desktop.background picture-uri')
-    su "$USER" -c 'gsettings set org.cinnamon.desktop.background picture-uri $GNOME_BACKGROUND'
+    su "$USER" -c "gsettings set org.cinnamon.desktop.background picture-uri $GNOME_BACKGROUND"
 fi
 
 exit 0
