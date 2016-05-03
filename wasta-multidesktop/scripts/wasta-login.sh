@@ -160,6 +160,16 @@ then
         su "$USER" -c 'gsettings set org.gnome.desktop.background draw-background false'
     fi
 
+    if [ -e /usr/share/applications/org.gnome.Nautilus.desktop ];
+    then
+        desktop-file-edit --set-key=NoDisplay --set-value=true \
+            /usr/share/applications/org.gnome.Nautilus.desktop || true;
+
+        # Prevent Nautilus from drawing the desktop
+        su "$USER" -c 'gsettings set org.gnome.desktop.background show-desktop-icons false'
+        su "$USER" -c 'gsettings set org.gnome.desktop.background draw-background false'
+    fi
+
     if [ -e /usr/share/applications/nautilus-compare-preferences.desktop ];
     then
         desktop-file-edit --set-key=NoDisplay --set-value=true \

@@ -1,3 +1,9 @@
+wasta-multidesktop-xenial (1.0.3) xenial; urgency=medium
+
+  * wasta-logout.sh: double-quote varibles when setting backgrounds
+
+ -- Rik Shaw <rikshaw76@gmail.com>  Tue, 03 May 2016 17:14:05 +0300
+
 wasta-multidesktop-xenial (1.0.2) xenial; urgency=medium
 
   * wasta-login.sh: nautilus-compare-preferences based on desktop
