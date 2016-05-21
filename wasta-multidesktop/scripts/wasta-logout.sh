@@ -48,9 +48,16 @@ if [ "$MUFFIN_ACTIVE" ];
 then
     # sync Cinnamon background to GNOME background
     su "$USER" -c "gsettings set org.gnome.desktop.background picture-uri $CINNAMON_BACKGROUND"
+    # sync Cinnmaon background to Unity Greeter LightDM background
+    LIGHTDM_BACKGROUND=$(echo $CINNAMON_BACKGROUND | sed 's@file://@@')
 else
     # sync GNOME background to Cinnamon background
     su "$USER" -c "gsettings set org.cinnamon.desktop.background picture-uri $GNOME_BACKGROUND"
+    # sync Cinnmaon background to Unity Greeter LightDM background
+    LIGHTDM_BACKGROUND=$(echo $GNOME_BACKGROUND | sed 's@file://@@')
 fi
+
+# set LIGHTDM background
+su "$USER" -c "gsettings set com.canonoical.unity-greeter background $LIGHTDM_BACKGROUND"
 
 exit 0

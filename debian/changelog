@@ -1,3 +1,11 @@
+wasta-multidesktop-xenial (1.0.4) xenial; urgency=medium
+
+  * wasta-logout.sh: sync lightdm background to cinnamon or gnome background.
+    Hopefully this prevents the "flashing" of the Ubuntu background for a
+    brief second before showing the user's background.
+
+ -- Rik Shaw <rikshaw76@gmail.com>  Sat, 21 May 2016 09:15:02 +0300
+
 wasta-multidesktop-xenial (1.0.3) xenial; urgency=medium
 
   * wasta-logout.sh: double-quote varibles when setting backgrounds
