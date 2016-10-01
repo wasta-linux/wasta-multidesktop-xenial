@@ -31,6 +31,8 @@
 #       other techniques for re-starting Nautilus / Unity / etc. all break
 #       Unity).
 #   2016-04-27 rik: nemo-compare-preferences.desktop handling based on desktop
+#   2016-10-01 rik: for all sessions make sure nemo and nautilus don't show
+#       hidden files and for nemo don't show 'location-entry' (n/a for nautilus)
 #
 # ==============================================================================
 
@@ -40,6 +42,15 @@ sleep 5s
 # ------------------------------------------------------------------------------
 # ALL Session Fixes
 # ------------------------------------------------------------------------------
+
+# Ensure Nemo not showing hidden files (power users may be annoyed)
+su "$USER" -c 'gsettings set org.nemo.preferences show-hidden-files false'
+
+# Ensure Nemo not showing "location entry" (text entry), but rather "breadcrumbs"
+su "$USER" -c 'gsettings set org.nemo.preferences show-location-entry false'
+
+# Ensure Nautilus not showing hidden files (power users may be annoyed)
+su "$USER" -c 'gsettings set org.gnome.nautilus.preferences show-hidden-files false'
 
 # THUNAR: even for XFCE we default to NEMO for file management
 if [ -e /usr/share/applications/Thunar.desktop ];
@@ -96,12 +107,6 @@ then
 
         # allow nemo to draw the desktop
         su "$USER" -c 'gsettings set org.nemo.desktop show-desktop-icons true'
-
-        # Ensure Nemo not showing hidden files (power users may be annoyed)
-        su "$USER" -c 'gsettings set org.nemo.preferences show-hidden-files false'
-
-        # Ensure Nemo not showing "location entry" (text entry), but rather "breadcrumbs"
-        su "$USER" -c 'gsettings set org.nemo.preferences show-location-entry false'
 
         # Ensure Nemo default folder handler
         sed -i \
@@ -230,12 +235,6 @@ then
 
         # allow nemo to draw the desktop
         su "$USER" -c 'gsettings set org.nemo.desktop show-desktop-icons true'
-
-        # Ensure Nemo not showing hidden files (power users may be annoyed)
-        su "$USER" -c 'gsettings set org.nemo.preferences show-hidden-files false'
-
-        # Ensure Nemo not showing "location entry" (text entry), but rather "breadcrumbs"
-        su "$USER" -c 'gsettings set org.nemo.preferences show-location-entry false'
 
         # Ensure Nemo default folder handler
         sed -i \

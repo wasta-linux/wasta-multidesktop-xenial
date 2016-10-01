@@ -1,3 +1,10 @@
+wasta-multidesktop-xenial (1.0.5) xenial; urgency=medium
+
+  * wasta-login.sh: for ALL sessions, have nemo and nautilus not show hidden
+    files.  Also for nemo turn off "location-entry" mode (n/a for nautilus)
+
+ -- Rik Shaw <rikshaw76@gmail.com>  Sat, 01 Oct 2016 16:08:09 +0300
+
 wasta-multidesktop-xenial (1.0.4) xenial; urgency=medium
 
   * wasta-logout.sh: sync lightdm background to cinnamon or gnome background.
