@@ -1,3 +1,10 @@
+wasta-multidesktop-xenial (1.0.6) xenial; urgency=medium
+
+  * wasta-login.sh: ensure nemo-autostart is disabled since was getting
+    triggered for Unity for some reason.  We trigger its start ourselves.
+
+ -- Rik Shaw <rikshaw76@gmail.com>  Wed, 19 Oct 2016 10:11:01 +0300
+
 wasta-multidesktop-xenial (1.0.5) xenial; urgency=medium
 
   * wasta-login.sh: for ALL sessions, have nemo and nautilus not show hidden
