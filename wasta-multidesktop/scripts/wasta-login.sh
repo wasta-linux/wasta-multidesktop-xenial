@@ -33,6 +33,7 @@
 #   2016-04-27 rik: nemo-compare-preferences.desktop handling based on desktop
 #   2016-10-01 rik: for all sessions make sure nemo and nautilus don't show
 #       hidden files and for nemo don't show 'location-entry' (n/a for nautilus)
+#   2016-10-19 rik: make sure nemo autostart is disabled.
 #
 # ==============================================================================
 
@@ -43,14 +44,24 @@ sleep 5s
 # ALL Session Fixes
 # ------------------------------------------------------------------------------
 
-# Ensure Nemo not showing hidden files (power users may be annoyed)
-su "$USER" -c 'gsettings set org.nemo.preferences show-hidden-files false'
-
-# Ensure Nemo not showing "location entry" (text entry), but rather "breadcrumbs"
-su "$USER" -c 'gsettings set org.nemo.preferences show-location-entry false'
-
 # Ensure Nautilus not showing hidden files (power users may be annoyed)
 su "$USER" -c 'gsettings set org.gnome.nautilus.preferences show-hidden-files false'
+
+if [ -x /usr/bin/nemo ];
+then
+    # Ensure Nemo not showing hidden files (power users may be annoyed)
+    su "$USER" -c 'gsettings set org.nemo.preferences show-hidden-files false'
+
+    # Ensure Nemo not showing "location entry" (text entry), but rather "breadcrumbs"
+    su "$USER" -c 'gsettings set org.nemo.preferences show-location-entry false'
+
+    # make sure Nemo autostart disabled (we start it ourselves)
+    if [ -e /etc/xdg/autostart/nemo-autostart.desktop ]
+    then
+        desktop-file-edit --set-key=NoDisplay --set-value=true \
+            /usr/share/applications/nemo-autostart.desktop || true;
+    fi
+fi
 
 # THUNAR: even for XFCE we default to NEMO for file management
 if [ -e /usr/share/applications/Thunar.desktop ];
