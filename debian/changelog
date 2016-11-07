@@ -1,3 +1,9 @@
+wasta-multidesktop-xenial (1.0.7) xenial; urgency=medium
+
+  * wasta-login-wrapper.sh: call login script using at if available
+
+ -- Rik Shaw <rikshaw76@gmail.com>  Mon, 07 Nov 2016 07:53:06 +0300
+
 wasta-multidesktop-xenial (1.0.6) xenial; urgency=medium
 
   * wasta-login.sh: ensure nemo-autostart is disabled since was getting
