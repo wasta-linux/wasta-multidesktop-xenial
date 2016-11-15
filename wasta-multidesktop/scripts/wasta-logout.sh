@@ -7,14 +7,36 @@
 #   2016-03-16 rik: initial script for 16.04
 #   2016-03-26 rik: syncing user's cinnamon / gnome backgrounds on logout
 #   2016-05-03 rik: double-quote variables when replacing backgrounds
+#   2016-11-14 rik: need to obtain logged in user from lightdm since script
+#       now triggered by systemd, which doesn't have any env variables set.
 #
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
+# Get last LightDM session and user (not accessible in systemd)
+# ------------------------------------------------------------------------------
+DEBUG=0
+LIGHTDM_USER=$(grep "User .* authorized" /var/log/lightdm/lightdm.log | tail -1 | sed 's@.*User \(.*\) authorized@\1@')
+LIGHTDM_SESSION=$(grep "Greeter requests session" /var/log/lightdm/lightdm.log | tail -1 | sed 's@.*Greeter requests session \(.*\)@\1@')
+if [ $DEBUG ];
+then
+    echo | tee -a /wasta-logout.txt
+    echo "$(date) starting wasta-logout" | tee -a /wasta-logout.txt
+    echo "lightdm user: $LIGHTDM_USER" | tee -a /wasta-logout.txt
+    echo "lightdm session: $LIGHTDM_SESSION" | tee -a /wasta-logout.txt
+fi
+
+# ------------------------------------------------------------------------------
 # Store current backgrounds
 # ------------------------------------------------------------------------------
-CINNAMON_BACKGROUND=$(su "$USER" -c 'gsettings get org.cinnamon.desktop.background picture-uri')
-GNOME_BACKGROUND=$(su "$USER" -c 'gsettings get org.gnome.desktop.background picture-uri')
+CINNAMON_BACKGROUND=$(su "$LIGHTDM_USER" -c 'dbus-launch gsettings get org.cinnamon.desktop.background picture-uri')
+GNOME_BACKGROUND=$(su "$LIGHTDM_USER" -c 'dbus-launch gsettings get org.gnome.desktop.background picture-uri')
+if [ $DEBUG ];
+then
+    echo "cinnamon bg: $CINNAMON_BACKGROUND" | tee -a /wasta-logout.txt
+    echo "gnome bg: $GNOME_BACKGROUND" | tee -a /wasta-logout.txt
+fi
+
 
 # ------------------------------------------------------------------------------
 # All Session Fixes
@@ -26,12 +48,12 @@ GNOME_BACKGROUND=$(su "$USER" -c 'gsettings get org.gnome.desktop.background pic
 #   to set it back to Nemo each time on login.
 
 # Prevent Nemo from drawing the desktop
-su "$USER" -c 'gsettings set org.nemo.desktop show-desktop-icons false'
+su "$LIGHTDM_USER" -c 'dbus-launch gsettings set org.nemo.desktop show-desktop-icons false'
 
 # Ensure Nautilus managing desktop and showing desktop icons
-su "$USER" -c 'gsettings set org.gnome.settings-daemon.plugins.background active true'
-su "$USER" -c 'gsettings set org.gnome.desktop.background draw-background true'
-su "$USER" -c 'gsettings set org.gnome.desktop.background show-desktop-icons true'
+su "$LIGHTDM_USER" -c 'dbus-launch gsettings set org.gnome.settings-daemon.plugins.background active true'
+su "$LIGHTDM_USER" -c 'dbus-launch gsettings set org.gnome.desktop.background draw-background true'
+su "$LIGHTDM_USER" -c 'dbus-launch gsettings set org.gnome.desktop.background show-desktop-icons true'
 
 # ------------------------------------------------------------------------------
 # Processing based on active Window Manager
@@ -41,23 +63,44 @@ su "$USER" -c 'gsettings set org.gnome.desktop.background show-desktop-icons tru
 # showing, just empty wmctrl -- maybe it gets unloaded sooner or something?
 # Anyway, will have to adjust based only on Muffin found or not then
 
-MUFFIN_ACTIVE=$(wmctrl -m | grep Muffin)
+# MUFFIN_ACTIVE=$(wmctrl -m | grep Muffin)
 # UNITY_ACTIVE$(wmctrl -m | grep Compiz)
 
-if [ "$MUFFIN_ACTIVE" ];
+if [ "$LIGHTDM_SESSION" == "cinnamon" ];
 then
+    if [ $DEBUG ];
+    then
+        echo "cinnamon detected: processing" | tee -a /wasta-logout.txt
+    fi
+
     # sync Cinnamon background to GNOME background
-    su "$USER" -c "gsettings set org.gnome.desktop.background picture-uri $CINNAMON_BACKGROUND"
+    su "$LIGHTDM_USER" -c "dbus-launch gsettings set org.gnome.desktop.background picture-uri $CINNAMON_BACKGROUND"
     # sync Cinnmaon background to Unity Greeter LightDM background
     LIGHTDM_BACKGROUND=$(echo $CINNAMON_BACKGROUND | sed 's@file://@@')
 else
+    if [ $DEBUG ];
+    then
+        echo "cinnamon NOT detected: processing" | tee -a /wasta-logout.txt
+    fi
+
     # sync GNOME background to Cinnamon background
-    su "$USER" -c "gsettings set org.cinnamon.desktop.background picture-uri $GNOME_BACKGROUND"
+    su "$LIGHTDM_USER" -c "dbus-launch gsettings set org.cinnamon.desktop.background picture-uri $GNOME_BACKGROUND"
     # sync Cinnmaon background to Unity Greeter LightDM background
     LIGHTDM_BACKGROUND=$(echo $GNOME_BACKGROUND | sed 's@file://@@')
 fi
 
 # set LIGHTDM background
-su "$USER" -c "gsettings set com.canonoical.unity-greeter background $LIGHTDM_BACKGROUND"
+su "$LIGHTDM_USER" -c "dbus-launch gsettings set com.canonoical.unity-greeter background $LIGHTDM_BACKGROUND"
+
+if [ $DEBUG ];
+then
+    LIGHTDM_BACKGROUND_NEW=$(su "$LIGHTDM_USER" -c 'dbus-launch gsettings get org.cinnamon.desktop.background picture-uri')
+    CINNAMON_BACKGROUND_NEW=$(su "$LIGHTDM_USER" -c 'dbus-launch gsettings get org.cinnamon.desktop.background picture-uri')
+    GNOME_BACKGROUND_NEW=$(su "$LIGHTDM_USER" -c 'dbus-launch gsettings get org.gnome.desktop.background picture-uri')
+    echo "lightdm bg NEW: $LIGHTDM_BACKGROUND_NEW" | tee -a /wasta-logout.txt
+    echo "cinnamon bg NEW: $CINNAMON_BACKGROUND_NEW" | tee -a /wasta-logout.txt
+    echo "gnome bg NEW: $GNOME_BACKGROUND_NEW" | tee -a /wasta-logout.txt
+    echo "$(date) exiting wasta-logout" | tee -a /wasta-logout.txt
+fi
 
 exit 0

@@ -11,7 +11,7 @@
 #       - wmctrl needed to check if cinnamon running, because env variables
 #           $GDMSESSION, $DESKTOP_SESSION not set when this script run by the
 #           'session-setup-script' trigger in /etc/lightdm/lightdm.conf.d/* files
-#       - logname is not set, but $USER does match current logged in user when
+#       - logname is not set, but $LIGHTDM_USER does match current logged in user when
 #           this script is executed by the 'session-setup-script' trigger in
 #           /etc/lightdm/lightdm.conf.d/* files
 #       - Appending '|| true;' to end of each call, because don't want to return
@@ -34,26 +34,39 @@
 #   2016-10-01 rik: for all sessions make sure nemo and nautilus don't show
 #       hidden files and for nemo don't show 'location-entry' (n/a for nautilus)
 #   2016-10-19 rik: make sure nemo autostart is disabled.
+#   2016-11-15 rik: adding debug login, also grabbing user and session from
+#       lightdm log (instead of getting session from wmctrl)
 #
 # ==============================================================================
 
-# wmctrl data doesn't get set for a while, so need to let things settle down
-sleep 5s
+DEBUG=0
+LIGHTDM_USER=$(grep "User .* authorized" /var/log/lightdm/lightdm.log | tail -1 | sed 's@.*User \(.*\) authorized@\1@')
+LIGHTDM_SESSION=$(grep "Greeter requests session" /var/log/lightdm/lightdm.log | tail -1 | sed 's@.*Greeter requests session \(.*\)@\1@')
+if [ $DEBUG ];
+then
+    echo | tee -a /wasta-login.txt
+    echo "$(date) starting wasta-login" | tee -a /wasta-login.txt
+    echo "lightdm user: $LIGHTDM_USER" | tee -a /wasta-login.txt
+    echo "lightdm session: $LIGHTDM_SESSION" | tee -a /wasta-login.txt
+    echo "NEMO show desktop icons: $(su $LIGHTDM_USER -c 'dbus-launch gsettings get org.nemo.desktop show-desktop-icons')" | tee -a /wasta-login.txt
+    echo "NAUTILUS show desktop icons: $(su $LIGHTDM_USER -c 'dbus-launch gsettings get org.gnome.desktop.background show-desktop-icons')" | tee -a /wasta-login.txt
+    echo "NAUTILUS draw background: $(su $LIGHTDM_USER -c 'dbus-launch gsettings get org.gnome.desktop.background draw-background')" | tee -a /wasta-login.txt
+fi
 
 # ------------------------------------------------------------------------------
 # ALL Session Fixes
 # ------------------------------------------------------------------------------
 
 # Ensure Nautilus not showing hidden files (power users may be annoyed)
-su "$USER" -c 'gsettings set org.gnome.nautilus.preferences show-hidden-files false'
+su "$LIGHTDM_USER" -c 'dbus-launch gsettings set org.gnome.nautilus.preferences show-hidden-files false'
 
 if [ -x /usr/bin/nemo ];
 then
     # Ensure Nemo not showing hidden files (power users may be annoyed)
-    su "$USER" -c 'gsettings set org.nemo.preferences show-hidden-files false'
+    su "$LIGHTDM_USER" -c 'dbus-launch gsettings set org.nemo.preferences show-hidden-files false'
 
     # Ensure Nemo not showing "location entry" (text entry), but rather "breadcrumbs"
-    su "$USER" -c 'gsettings set org.nemo.preferences show-location-entry false'
+    su "$LIGHTDM_USER" -c 'dbus-launch gsettings set org.nemo.preferences show-location-entry false'
 
     # make sure Nemo autostart disabled (we start it ourselves)
     if [ -e /etc/xdg/autostart/nemo-autostart.desktop ]
@@ -63,42 +76,19 @@ then
     fi
 fi
 
-# THUNAR: even for XFCE we default to NEMO for file management
-if [ -e /usr/share/applications/Thunar.desktop ];
-then
-    desktop-file-edit --set-key=NoDisplay --set-value=true \
-        /usr/share/applications/Thunar.desktop || true;
-fi
-
-if [ -e /usr/share/applications/thunar-settings.desktop ];
-then
-    desktop-file-edit --set-key=NoDisplay --set-value=true \
-        /usr/share/applications/thunar-settings.desktop || true;
-fi
-
 # ------------------------------------------------------------------------------
-# Processing based on active Window Manager
+# Processing based on session
 # ------------------------------------------------------------------------------
 
-# Searching for "Name: <Anything>".  If WM isn't initialized, will not match
-WMCTRL_NAME=$(wmctrl -m | grep "^Name: [[:alnum:]]")
-if [ -z "$WMCTRL_NAME" ];
-then
-    # no wmctrl name (login taking too long), so won't make any changes
-    #   this will be the case on first boot as it takes a while to set up
-    #   a new home, etc.  No problem next time login it will be sorted out
-    exit 0
-fi
-
-# Check if MUFFIN window manager is active
-MUFFIN_ACTIVE=$(wmctrl -m | grep Muffin)
-XFWM4_ACTIVE=$(wmctrl -m | grep Xfwm4)
-
-if [ -n "$MUFFIN_ACTIVE" ];
+if [ "$LIGHTDM_SESSION" == "cinnamon" ];
 then
     # ==========================================================================
     # ACTIVE SESSION: CINNAMON
     # ==========================================================================
+    if [ $DEBUG ];
+    then
+        echo "processing based on cinnammon session" | tee -a /wasta-login.txt
+    fi
 
     # --------------------------------------------------------------------------
     # CINNAMON Settings
@@ -117,7 +107,7 @@ then
             /usr/share/applications/nemo.desktop || true;
 
         # allow nemo to draw the desktop
-        su "$USER" -c 'gsettings set org.nemo.desktop show-desktop-icons true'
+        su "$LIGHTDM_USER" -c 'dbus-launch gsettings set org.nemo.desktop show-desktop-icons true'
 
         # Ensure Nemo default folder handler
         sed -i \
@@ -128,12 +118,16 @@ then
             /usr/share/gnome/applications/defaults.list
 
         # Nautilus may be active: kill (will not error if not found)
-        su "$USER" -c 'killall nautilus || true;'
+        su "$LIGHTDM_USER" -c 'dbus-launch killall nautilus || true;'
 
         if ! [ "$(pidof nemo)" ];
         then
+            if [ $DEBUG ];
+            then
+                echo "nemo not started: attempting to start" | tee -a /wasta-login.txt
+            fi
             # Ensure Nemo Started
-            su "$USER" -c 'nemo -n &'
+            su "$LIGHTDM_USER" -c 'dbus-launch nemo -n &'
         fi
     fi
 
@@ -172,8 +166,8 @@ then
             /usr/share/applications/nautilus.desktop || true;
 
         # Prevent Nautilus from drawing the desktop
-        su "$USER" -c 'gsettings set org.gnome.desktop.background show-desktop-icons false'
-        su "$USER" -c 'gsettings set org.gnome.desktop.background draw-background false'
+        su "$LIGHTDM_USER" -c 'dbus-launch gsettings set org.gnome.desktop.background show-desktop-icons false'
+        su "$LIGHTDM_USER" -c 'dbus-launch gsettings set org.gnome.desktop.background draw-background false'
     fi
 
     if [ -e /usr/share/applications/org.gnome.Nautilus.desktop ];
@@ -182,8 +176,8 @@ then
             /usr/share/applications/org.gnome.Nautilus.desktop || true;
 
         # Prevent Nautilus from drawing the desktop
-        su "$USER" -c 'gsettings set org.gnome.desktop.background show-desktop-icons false'
-        su "$USER" -c 'gsettings set org.gnome.desktop.background draw-background false'
+        su "$LIGHTDM_USER" -c 'dbus-launch gsettings set org.gnome.desktop.background show-desktop-icons false'
+        su "$LIGHTDM_USER" -c 'dbus-launch gsettings set org.gnome.desktop.background draw-background false'
     fi
 
     if [ -e /usr/share/applications/nautilus-compare-preferences.desktop ];
@@ -198,163 +192,16 @@ then
             /usr/share/applications/software-properties-gnome.desktop || true;
     fi
 
-    # --------------------------------------------------------------------------
-    # XFCE Settings
-    # --------------------------------------------------------------------------
-    # HIDE XFCE Items
-    if [ -e /usr/share/applications/thunar-volman-settings.desktop ];
-    then
-        desktop-file-edit --set-key=NoDisplay --set-value=true \
-            /usr/share/applications/thunar-volman-settings.desktop || true;
-    fi
-
-    #if [ -e /usr/share/applications/pavucontrol.desktop ];
-    #then
-    #    desktop-file-edit --set-key=NoDisplay --set-value=true \
-    #        /usr/share/applications/pavucontrol.desktop || true;
-    #fi
-
-    # Make inactive autostart items display (had to not display in XFCE since
-    #   doesn't support the "Hidden=true" parameter)
-    if [ -e /etc/xdg/autostart/skype.desktop ];
-    then
-        desktop-file-edit --remove-key=Hidden \
-            /etc/xdg/autostart/skype.desktop || true;
-    fi
-
-    if [ -e /etc/xdg/autostart/artha.desktop ];
-    then
-        desktop-file-edit --remove-key=Hidden \
-            /etc/xdg/autostart/artha.desktop || true;
-    fi
-
-elif [ -n "$XFWM4_ACTIVE" ];
+elif [ "$LIGHTDM_SESSION" == "ubuntu" ];
 then
     # ==========================================================================
-    # ACTIVE SESSION: XFCE
+    # ACTIVE SESSION: UNITY (sorry, no XFCE, KDE, or GNOME support right now...)
     # ==========================================================================
 
-    # --------------------------------------------------------------------------
-    # CINNAMON Settings
-    # --------------------------------------------------------------------------
-    # SHOW CINNAMON items
-    # NOTE: We still default to nemo for file managing in XFCE instead of Thunar
-    if [ -e /usr/bin/nemo ];
+    if [ $DEBUG ];
     then
-        desktop-file-edit --remove-key=NoDisplay \
-            /usr/share/applications/nemo.desktop || true;
-
-        # allow nemo to draw the desktop
-        su "$USER" -c 'gsettings set org.nemo.desktop show-desktop-icons true'
-
-        # Ensure Nemo default folder handler
-        sed -i \
-            -e 's@\(inode/directory\)=.*@\1=nemo.desktop@' \
-            -e 's@\(application/x-gnome-saved-search\)=.*@\1=nemo.desktop@' \
-            /etc/gnome/defaults.list \
-            /usr/share/applications/defaults.list \
-            /usr/share/gnome/applications/defaults.list
-
-        # Nautilus may be active: kill (will not error if not found)
-        su "$USER" -c 'killall nautilus || true;'
-
-        if ! [ "$(pidof nemo)" ];
-        then
-            # Ensure Nemo Started
-            su "$USER" -c 'nemo -n &'
-        fi
-
+        echo "processing based on unity / gnome session" | tee -a /wasta-login.txt
     fi
-
-    if [ -e /usr/share/applications/nemo-compare-preferences.desktop ];
-    then
-        desktop-file-edit --remove-key=NoDisplay \
-            /usr/share/applications/nemo-compare-preferences.desktop || true;
-    fi
-
-    # --------------------------------------------------------------------------
-    # UNITY/GNOME Settings
-    # --------------------------------------------------------------------------
-    # SHOW UNITY/GNOME Items
-    if [ -e /usr/share/applications/alacarte.desktop ];
-    then
-            desktop-file-edit --remove-key=NoDisplay \
-            /usr/share/applications/alacarte.desktop || true;
-    fi
-
-    # HIDE UNITY/GNOME Items
-    # Gnome Startup Applications
-    if [ -e /usr/share/applications/gnome-session-properties.desktop ];
-    then
-        desktop-file-edit --set-key=NoDisplay --set-value=true \
-            /usr/share/applications/gnome-session-properties.desktop || true;
-    fi
-
-    if [ -e /usr/share/applications/gnome-tweak-tool.desktop ];
-    then
-        desktop-file-edit --set-key=NoDisplay --set-value=true \
-            /usr/share/applications/gnome-tweak-tool.desktop || true;
-    fi
-
-    if [ -e /usr/share/applications/nautilus.desktop ];
-    then
-        desktop-file-edit --set-key=NoDisplay --set-value=true \
-            /usr/share/applications/nautilus.desktop || true;
-
-        # Prevent Nautilus from drawing the desktop
-        su "$USER" -c 'gsettings set org.gnome.desktop.background show-desktop-icons false'
-        su "$USER" -c 'gsettings set org.gnome.desktop.background draw-background false'
-
-        # Nautilus may be active: kill (will not error if not found)
-        su "$USER" -c 'killall nautilus || true;'
-
-    fi
-
-    if [ -e /usr/share/applications/nautilus-compare-preferences.desktop ];
-    then
-        desktop-file-edit --set-key=NoDisplay --set-value=true \
-            /usr/share/applications/nautilus-compare-preferences.desktop || true;
-    fi
-
-    if [ -e /usr/share/applications/software-properties-gnome.desktop ];
-    then
-        desktop-file-edit --set-key=NoDisplay --set-value=true \
-            /usr/share/applications/software-properties-gnome.desktop || true;
-    fi
-
-    # --------------------------------------------------------------------------
-    # XFCE Settings
-    # --------------------------------------------------------------------------
-    # SHOW XFCE Items
-    if [ -e /usr/share/applications/thunar-volman-settings.desktop ];
-    then
-        desktop-file-edit --remove-key=NoDisplay \
-            /usr/share/applications/thunar-volman-settings.desktop || true;
-    fi
-
-    #if [ -e /usr/share/applications/pavucontrol.desktop ];
-    #then
-    #    desktop-file-edit --remove-key=NoDisplay \
-    #        /usr/share/applications/pavucontrol.desktop || true;
-    #fi
-
-    # Make inactive autostart items not display (xfce has no "Hidden=true" key)
-    if [ -e /etc/xdg/autostart/skype.desktop ];
-    then
-        desktop-file-edit --set-key=Hidden --set-value=true \
-            /etc/xdg/autostart/skype.desktop || true;
-    fi
-
-    if [ -e /etc/xdg/autostart/artha.desktop ];
-    then
-        desktop-file-edit --set-key=Hidden --set-value=true \
-            /etc/xdg/autostart/artha.desktop || true;
-    fi
-
-else
-    # ==========================================================================
-    # ACTIVE SESSION: UNITY/GNOME (sorry, no KDE support right now...)
-    # ==========================================================================
 
     # --------------------------------------------------------------------------
     # CINNAMON Settings
@@ -365,10 +212,10 @@ else
             /usr/share/applications/nemo.desktop || true;
 
         # prevent nemo from drawing the desktop
-        su "$USER" -c 'gsettings set org.nemo.desktop show-desktop-icons false'
+        su "$LIGHTDM_USER" -c 'dbus-launch gsettings set org.nemo.desktop show-desktop-icons false'
 
         # Nemo may be active: kill (will not error if not found)
-        su "$USER" -c 'killall nemo || true;'
+        su "$LIGHTDM_USER" -c 'dbus-launch killall nemo || true;'
     fi
 
     if [ -e /usr/share/applications/nemo-compare-preferences.desktop ];
@@ -405,8 +252,8 @@ else
             /usr/share/applications/nautilus.desktop || true;
 
         # Allow Nautilus to draw the desktop
-        su "$USER" -c 'gsettings set org.gnome.desktop.background show-desktop-icons true'
-        su "$USER" -c 'gsettings set org.gnome.desktop.background draw-background true'
+        su "$LIGHTDM_USER" -c 'dbus-launch gsettings set org.gnome.desktop.background show-desktop-icons true'
+        su "$LIGHTDM_USER" -c 'dbus-launch gsettings set org.gnome.desktop.background draw-background true'
 
         # Ensure Nautilus default folder handler
         sed -i \
@@ -416,12 +263,22 @@ else
             /usr/share/applications/defaults.list \
             /usr/share/gnome/applications/defaults.list
 
-        # rik: IF Nautlius not already started, below will sort of "HANG" Unity
-        #     so not doing here: instead, using wasta-logout.sh to set defaults
-        #     to Nautilus, meaning that Nautilus *should* be ready to start
-        #     each time.
         # Ensure Nautilus Started
-        #su "$USER" -c 'nautilus -n &'
+        if ! [ "$(pidof nautilus)" ];
+        then
+            if [ $DEBUG ];
+            then
+                echo "nautilus not started, but not starting or unity will hang" | tee -a /wasta-login.txt
+            fi
+            # rik: IF Nautlius not already started, below will sort of "HANG" Unity
+            #     so not doing here: instead, using wasta-login.sh to set defaults
+            #     to Nautilus, meaning that Nautilus *should* be ready to start
+            #     each time.
+            # 2016-11-15: confirmed still "hangs" if attempt to restart nautilus,
+            #   so keeping commented out.
+            # Ensure Nautilus Started
+            #su "$LIGHTDM_USER" -c 'dbus-launch nautilus -n &' | tee -a /wasta-login.txt
+        fi
     fi
 
     if [ -e /usr/share/applications/nautilus-compare-preferences.desktop ];
@@ -436,35 +293,21 @@ else
             /usr/share/applications/software-properties-gnome.desktop || true;
     fi
 
-    # --------------------------------------------------------------------------
-    # XFCE Settings
-    # --------------------------------------------------------------------------
-    # HIDE XFCE Items
-    if [ -e /usr/share/applications/thunar-volman-settings.desktop ];
+else
+    if [ $DEBUG ];
     then
-        desktop-file-edit --set-key=NoDisplay --set-value=true \
-            /usr/share/applications/thunar-volman-settings.desktop || true;
+        echo "desktop session not supported" | tee -a /wasta-login.txt
     fi
 
-    #if [ -e /usr/share/applications/pavucontrol.desktop ];
-    #then
-    #    desktop-file-edit --set-key=NoDisplay --set-value=true \
-    #        /usr/share/applications/pavucontrol.desktop || true;
-    #fi
+fi
 
-    # Make inactive autostart items display (had to not display in XFCE since
-    #   doesn't support the "Hidden=true" parameter)
-    if [ -e /etc/xdg/autostart/skype.desktop ];
-    then
-        desktop-file-edit --remove-key=Hidden \
-            /etc/xdg/autostart/skype.desktop || true;
-    fi
-
-    if [ -e /etc/xdg/autostart/artha.desktop ];
-    then
-        desktop-file-edit --remove-key=Hidden \
-            /etc/xdg/autostart/artha.desktop || true;
-    fi
+if [ $DEBUG ];
+then
+    echo "final settings:" | tee -a /wasta-login.txt
+    echo "NEMO show desktop icons: $(su $LIGHTDM_USER -c 'dbus-launch gsettings get org.nemo.desktop show-desktop-icons')" | tee -a /wasta-login.txt
+    echo "NAUTILUS show desktop icons: $(su $LIGHTDM_USER -c 'dbus-launch gsettings get org.gnome.desktop.background show-desktop-icons')" | tee -a /wasta-login.txt
+    echo "NAUTILUS draw background: $(su $LIGHTDM_USER -c 'dbus-launch gsettings get org.gnome.desktop.background draw-background')" | tee -a /wasta-login.txt
+    echo "$(date) exiting wasta-login" | tee -a /wasta-login.txt
 fi
 
 exit 0

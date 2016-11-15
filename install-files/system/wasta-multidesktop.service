@@ -1,0 +1,10 @@
+[Unit]
+Description=Run wasta-multidesktop login and logout scripts
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStop=/usr/share/wasta-multidesktop/scripts/wasta-logout.sh
+
+[Install]
+WantedBy=multi-user.target

@@ -8,6 +8,7 @@
 #   only intended to be run at package installation.  
 #
 # 2015-06-18 rik: initial script
+# 2016-11-14 rik: enabling wasta-multidesktop systemd service
 #
 # ==============================================================================
 
@@ -27,6 +28,11 @@ fi
 # ------------------------------------------------------------------------------
 # Main Processing
 # ------------------------------------------------------------------------------
+
+echo
+echo "*** Enabling wasta-multidesktop systemd service"
+echo
+systemctl enable wasta-multidesktop
 
 # ------------------------------------------------------------------------------
 # Finished
