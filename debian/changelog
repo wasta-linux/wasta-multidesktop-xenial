@@ -1,3 +1,10 @@
+wasta-multidesktop-xenial (1.0.9) xenial; urgency=medium
+
+  * login and logout: change "debug" to ""
+  * wasta-logout.sh: fix typo in "canonical"
+
+ -- Rik Shaw <rikshaw76@gmail.com>  Tue, 15 Nov 2016 10:31:52 +0300
+
 wasta-multidesktop-xenial (1.0.8) xenial; urgency=medium
 
   * wasta-logout.sh: triggering with systemd not lightdm
