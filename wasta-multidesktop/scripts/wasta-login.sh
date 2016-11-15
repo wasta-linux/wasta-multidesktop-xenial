@@ -39,7 +39,7 @@
 #
 # ==============================================================================
 
-DEBUG=0
+DEBUG=""
 LIGHTDM_USER=$(grep "User .* authorized" /var/log/lightdm/lightdm.log | tail -1 | sed 's@.*User \(.*\) authorized@\1@')
 LIGHTDM_SESSION=$(grep "Greeter requests session" /var/log/lightdm/lightdm.log | tail -1 | sed 's@.*Greeter requests session \(.*\)@\1@')
 if [ $DEBUG ];

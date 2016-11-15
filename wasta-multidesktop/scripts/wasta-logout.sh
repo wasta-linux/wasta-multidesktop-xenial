@@ -15,7 +15,7 @@
 # ------------------------------------------------------------------------------
 # Get last LightDM session and user (not accessible in systemd)
 # ------------------------------------------------------------------------------
-DEBUG=0
+DEBUG=""
 LIGHTDM_USER=$(grep "User .* authorized" /var/log/lightdm/lightdm.log | tail -1 | sed 's@.*User \(.*\) authorized@\1@')
 LIGHTDM_SESSION=$(grep "Greeter requests session" /var/log/lightdm/lightdm.log | tail -1 | sed 's@.*Greeter requests session \(.*\)@\1@')
 if [ $DEBUG ];
@@ -90,11 +90,11 @@ else
 fi
 
 # set LIGHTDM background
-su "$LIGHTDM_USER" -c "dbus-launch gsettings set com.canonoical.unity-greeter background $LIGHTDM_BACKGROUND"
+su "$LIGHTDM_USER" -c "dbus-launch gsettings set com.canonical.unity-greeter background $LIGHTDM_BACKGROUND"
 
 if [ $DEBUG ];
 then
-    LIGHTDM_BACKGROUND_NEW=$(su "$LIGHTDM_USER" -c 'dbus-launch gsettings get org.cinnamon.desktop.background picture-uri')
+    LIGHTDM_BACKGROUND_NEW=$(su "$LIGHTDM_USER" -c 'dbus-launch gsettings get com.canonical.unity-greeter background')
     CINNAMON_BACKGROUND_NEW=$(su "$LIGHTDM_USER" -c 'dbus-launch gsettings get org.cinnamon.desktop.background picture-uri')
     GNOME_BACKGROUND_NEW=$(su "$LIGHTDM_USER" -c 'dbus-launch gsettings get org.gnome.desktop.background picture-uri')
     echo "lightdm bg NEW: $LIGHTDM_BACKGROUND_NEW" | tee -a /wasta-logout.txt
