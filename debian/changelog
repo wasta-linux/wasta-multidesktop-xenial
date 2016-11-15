@@ -1,3 +1,13 @@
+wasta-multidesktop-xenial (1.0.8) xenial; urgency=medium
+
+  * wasta-logout.sh: triggering with systemd not lightdm
+  * wasta-login.sh: not using wmctrl anymore, but basing session and user
+    off of lightdm.log
+  * adding "debug option" to scripts: to enable they need to be edited and
+    the value changed to 1.
+
+ -- Rik Shaw <rikshaw76@gmail.com>  Tue, 15 Nov 2016 09:40:10 +0300
+
 wasta-multidesktop-xenial (1.0.7) xenial; urgency=medium
 
   * wasta-login-wrapper.sh: call login script using at if available
