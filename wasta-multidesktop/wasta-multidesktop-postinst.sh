@@ -30,9 +30,9 @@ fi
 # ------------------------------------------------------------------------------
 
 echo
-echo "*** Enabling wasta-multidesktop systemd service"
+echo "*** Enabling wasta-logout systemd service"
 echo
-systemctl enable wasta-multidesktop
+systemctl enable wasta-logout
 
 # ------------------------------------------------------------------------------
 # Finished

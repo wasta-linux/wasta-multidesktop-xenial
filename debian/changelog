@@ -1,3 +1,9 @@
+wasta-multidesktop-xenial (1.1.0) xenial; urgency=medium
+
+  * install-files/system: renamed service to wasta-logout
+
+ -- Rik Shaw <rikshaw76@gmail.com>  Wed, 16 Nov 2016 11:18:10 +0300
+
 wasta-multidesktop-xenial (1.0.9) xenial; urgency=medium
 
   * login and logout: change "debug" to ""

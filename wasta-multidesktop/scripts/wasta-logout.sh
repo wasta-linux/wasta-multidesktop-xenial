@@ -31,12 +31,13 @@ fi
 # ------------------------------------------------------------------------------
 CINNAMON_BACKGROUND=$(su "$LIGHTDM_USER" -c 'dbus-launch gsettings get org.cinnamon.desktop.background picture-uri')
 GNOME_BACKGROUND=$(su "$LIGHTDM_USER" -c 'dbus-launch gsettings get org.gnome.desktop.background picture-uri')
+LIGHTDM_BACKGROUND=$(su "$LIGHTDM_USER" -c 'dbus-launch gsettings get com.canonical.unity-greeter background')
 if [ $DEBUG ];
 then
     echo "cinnamon bg: $CINNAMON_BACKGROUND" | tee -a /wasta-logout.txt
     echo "gnome bg: $GNOME_BACKGROUND" | tee -a /wasta-logout.txt
+    echo "lightdm bg: $LIGHTDM_BACKGROUND" | tee -a /wasta-logout.txt
 fi
-
 
 # ------------------------------------------------------------------------------
 # All Session Fixes
@@ -66,7 +67,13 @@ su "$LIGHTDM_USER" -c 'dbus-launch gsettings set org.gnome.desktop.background sh
 # MUFFIN_ACTIVE=$(wmctrl -m | grep Muffin)
 # UNITY_ACTIVE$(wmctrl -m | grep Compiz)
 
-if [ "$LIGHTDM_SESSION" == "cinnamon" ];
+if [ "$LIGHTDM_SESSION" == "" ];
+then
+    if [ $DEBUG ];
+    then
+        echo "desktop not detected: not processing" | tee -a /wasta-logout.txt
+    fi
+elif [ "$LIGHTDM_SESSION" == "cinnamon" ];
 then
     if [ $DEBUG ];
     then
@@ -94,12 +101,12 @@ su "$LIGHTDM_USER" -c "dbus-launch gsettings set com.canonical.unity-greeter bac
 
 if [ $DEBUG ];
 then
-    LIGHTDM_BACKGROUND_NEW=$(su "$LIGHTDM_USER" -c 'dbus-launch gsettings get com.canonical.unity-greeter background')
     CINNAMON_BACKGROUND_NEW=$(su "$LIGHTDM_USER" -c 'dbus-launch gsettings get org.cinnamon.desktop.background picture-uri')
     GNOME_BACKGROUND_NEW=$(su "$LIGHTDM_USER" -c 'dbus-launch gsettings get org.gnome.desktop.background picture-uri')
-    echo "lightdm bg NEW: $LIGHTDM_BACKGROUND_NEW" | tee -a /wasta-logout.txt
+    LIGHTDM_BACKGROUND_NEW=$(su "$LIGHTDM_USER" -c 'dbus-launch gsettings get com.canonical.unity-greeter background')
     echo "cinnamon bg NEW: $CINNAMON_BACKGROUND_NEW" | tee -a /wasta-logout.txt
     echo "gnome bg NEW: $GNOME_BACKGROUND_NEW" | tee -a /wasta-logout.txt
+    echo "lightdm bg NEW: $LIGHTDM_BACKGROUND_NEW" | tee -a /wasta-logout.txt
     echo "$(date) exiting wasta-logout" | tee -a /wasta-logout.txt
 fi
 
