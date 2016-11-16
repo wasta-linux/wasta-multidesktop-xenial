@@ -20,9 +20,9 @@ set -e
 case "$1" in
     remove|upgrade|deconfigure)
     echo
-    echo "*** Disabling wasta-multidesktop systemd service"
+    echo "*** Disabling wasta-logout systemd service"
     echo
-    deb-systemd-invoke disable wasta-multidesktop
+    deb-systemd-invoke disable wasta-logout
 
     ;;
 
