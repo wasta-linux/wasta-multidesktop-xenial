@@ -39,6 +39,8 @@
 #   2017-03-18 rik: writing user session to log so can retrieve on next login
 #       to sync settings if session has changed (this was formerly done by a
 #       wasta-logout systemd script which was difficult to work with).
+#   2017-03-18 rik: this script is no longer triggered by 'at' so user login
+#       won't complete until after this script completes.
 #
 # ==============================================================================
 
@@ -113,39 +115,32 @@ fi
 # --------------------------------------------------------------------------
 # SYNC to PREV_SESSION if different
 # --------------------------------------------------------------------------
-
-if [ "$PREV_SESSION" == "$CURR_SESSION" ];
+# previously I only triggered if current and prev sessions were different
+# but I will always apply the changes in case it didn't succeed before.
+if [ "$PREV_SESSION" == "cinnamon" ];
 then
+    # apply Cinnamon settings to GNOME
     if [ $DEBUG ];
     then
-        echo "Current and Previous Sessions both $PREV_SESSION: No Processing" | tee -a $LOGFILE
+        echo "Previous Session Cinnamon: Sync TO GNOME" | tee -a $LOGFILE
     fi
+    # sync Cinnamon background to GNOME background
+    su "$CURR_USER" -c "dbus-launch gsettings set org.gnome.desktop.background picture-uri $CINNAMON_BACKGROUND"
+    # sync Cinnmaon background to Unity Greeter LightDM background
+    LIGHTDM_BACKGROUND=$(echo $CINNAMON_BACKGROUND | sed 's@file://@@')
+    su "$CURR_USER" -c "dbus-launch gsettings set com.canonical.unity-greeter background $LIGHTDM_BACKGROUND"
 else
-    if [ "$PREV_SESSION" == "cinnamon" ];
+    # apply GNOME settings to Cinnamon
+    if [ $DEBUG ];
     then
-        # apply Cinnamon settings to GNOME
-        if [ $DEBUG ];
-        then
-            echo "Previous Session Cinnamon: Sync TO GNOME" | tee -a $LOGFILE
-        fi
-        # sync Cinnamon background to GNOME background
-        su "$CURR_USER" -c "dbus-launch gsettings set org.gnome.desktop.background picture-uri $CINNAMON_BACKGROUND"
-        # sync Cinnmaon background to Unity Greeter LightDM background
-        LIGHTDM_BACKGROUND=$(echo $CINNAMON_BACKGROUND | sed 's@file://@@')
-        su "$CURR_USER" -c "dbus-launch gsettings set com.canonical.unity-greeter background $LIGHTDM_BACKGROUND"
-    else
-        # apply GNOME settings to Cinnamon
-        if [ $DEBUG ];
-        then
-            echo "Previous Session NOT Cinnamon: Sync TO Cinnamon" | tee -a $LOGFILE
-        fi
-        # sync GNOME background to Cinnamon background
-        su "$CURR_USER" -c "dbus-launch gsettings set org.cinnamon.desktop.background picture-uri $GNOME_BACKGROUND"
-        # sync GNOME background to Unity Greeter LightDM background
-        LIGHTDM_BACKGROUND=$(echo $GNOME_BACKGROUND | sed 's@file://@@')
-        # set LIGHTDM background
-        su "$CURR_USER" -c "dbus-launch gsettings set com.canonical.unity-greeter background $LIGHTDM_BACKGROUND"
+        echo "Previous Session NOT Cinnamon: Sync TO Cinnamon" | tee -a $LOGFILE
     fi
+    # sync GNOME background to Cinnamon background
+    su "$CURR_USER" -c "dbus-launch gsettings set org.cinnamon.desktop.background picture-uri $GNOME_BACKGROUND"
+    # sync GNOME background to Unity Greeter LightDM background
+    LIGHTDM_BACKGROUND=$(echo $GNOME_BACKGROUND | sed 's@file://@@')
+    # set LIGHTDM background
+    su "$CURR_USER" -c "dbus-launch gsettings set com.canonical.unity-greeter background $LIGHTDM_BACKGROUND"
 fi
 
 # ------------------------------------------------------------------------------

@@ -19,7 +19,7 @@ set -e
 
 case "$1" in
     remove|upgrade|deconfigure)
-        # LEGACY: remove any systemd link 
+        # LEGACY: remove any systemd link
         rm -rf /etc/systemd/system/multi-user.target.wants/wasta-logout.service
     ;;
 

@@ -8,7 +8,7 @@ Homepage: https://github.com/wasta-linux/wasta-multidesktop-xenial
 
 Package: wasta-multidesktop-xenial
 Architecture: all
-Depends: at, lightdm, wasta-core-xenial, ${shlibs:Depends}, ${misc:Depends}
+Depends: lightdm, wasta-core-xenial, ${shlibs:Depends}, ${misc:Depends}
 Description: Wasta-Linux MultiDesktop
  Ensures cross-desktop compatibility between Cinnamon and Unity sessions.
  A lightdm script is executed on login to make necessary adjustments based
