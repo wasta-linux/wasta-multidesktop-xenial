@@ -1,3 +1,2 @@
 install-files/lightdm.conf.d               etc/lightdm
-install-files/system                       lib/systemd
 wasta-multidesktop                         usr/share

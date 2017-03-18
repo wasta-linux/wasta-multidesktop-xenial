@@ -1,7 +1,7 @@
 #!/bin/bash
 # ==============================================================================
 # Wasta-Linux Logout Script
-# 
+#
 #   This script is intended to run by lightdm at logout.
 #
 #   2016-03-16 rik: initial script for 16.04
@@ -15,7 +15,7 @@
 # ------------------------------------------------------------------------------
 # Get last LightDM session and user (not accessible in systemd)
 # ------------------------------------------------------------------------------
-DEBUG=""
+DEBUG="YES"
 LIGHTDM_USER=$(grep "User .* authorized" /var/log/lightdm/lightdm.log | tail -1 | sed 's@.*User \(.*\) authorized@\1@')
 LIGHTDM_SESSION=$(grep "Greeter requests session" /var/log/lightdm/lightdm.log | tail -1 | sed 's@.*Greeter requests session \(.*\)@\1@')
 if [ $DEBUG ];
@@ -49,12 +49,29 @@ fi
 #   to set it back to Nemo each time on login.
 
 # Prevent Nemo from drawing the desktop
+NEMO_SHOW_DESK=$(su "$LIGHTDM_USER" -c 'dbus-launch gsettings get org.nemo.desktop show-desktop-icons')
 su "$LIGHTDM_USER" -c 'dbus-launch gsettings set org.nemo.desktop show-desktop-icons false'
+NEMO_SHOW_DESK_2=$(su "$LIGHTDM_USER" -c 'dbus-launch gsettings get org.nemo.desktop show-desktop-icons')
+
+if [ $DEBUG ];
+then
+    echo "nemo show desk 1: $NEMO_SHOW_DESK" | tee -a /wasta-logout.txt
+    echo "nemo show desk 2: $NEMO_SHOW_DESK_2" | tee -a /wasta-logout.txt
+fi
+
 
 # Ensure Nautilus managing desktop and showing desktop icons
 su "$LIGHTDM_USER" -c 'dbus-launch gsettings set org.gnome.settings-daemon.plugins.background active true'
 su "$LIGHTDM_USER" -c 'dbus-launch gsettings set org.gnome.desktop.background draw-background true'
 su "$LIGHTDM_USER" -c 'dbus-launch gsettings set org.gnome.desktop.background show-desktop-icons true'
+
+NEMO_SHOW_DESK_3=$(su "$LIGHTDM_USER" -c 'dbus-launch gsettings get org.nemo.desktop show-desktop-icons')
+
+if [ $DEBUG ];
+then
+    echo "nemo show desk 3: $NEMO_SHOW_DESK_3" | tee -a /wasta-logout.txt
+fi
+
 
 # ------------------------------------------------------------------------------
 # Processing based on active Window Manager
@@ -109,5 +126,13 @@ then
     echo "lightdm bg NEW: $LIGHTDM_BACKGROUND_NEW" | tee -a /wasta-logout.txt
     echo "$(date) exiting wasta-logout" | tee -a /wasta-logout.txt
 fi
+
+NEMO_SHOW_DESK_4=$(su "$LIGHTDM_USER" -c 'dbus-launch gsettings get org.nemo.desktop show-desktop-icons')
+
+if [ $DEBUG ];
+then
+    echo "nemo show desk 4: $NEMO_SHOW_DESK_4" | tee -a /wasta-logout.txt
+fi
+
 
 exit 0

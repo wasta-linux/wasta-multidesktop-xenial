@@ -3,6 +3,7 @@ Description=Run wasta-multidesktop wasta-logout script
 
 [Service]
 Type=oneshot
+ExecStart=/bin/true
 ExecStop=/usr/share/wasta-multidesktop/scripts/wasta-logout.sh
 
 [Install]
