@@ -19,11 +19,8 @@ set -e
 
 case "$1" in
     remove|upgrade|deconfigure)
-    echo
-    echo "*** Disabling wasta-logout systemd service"
-    echo
-    deb-systemd-invoke disable wasta-logout
-
+        # LEGACY: remove any systemd link 
+        rm -rf /etc/systemd/system/multi-user.target.wants/wasta-logout.service
     ;;
 
     failed-upgrade)

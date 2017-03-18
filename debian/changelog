@@ -1,3 +1,11 @@
+wasta-multidesktop-xenial (1.1.1) xenial; urgency=medium
+
+  * removing systemd logout script, now wasta-login will log the
+    current user session and read it on next login to compare if
+    the user session changed.  If so it will sync GNOME and Cinnamon 
+
+ -- Rik Shaw <rikshaw76@gmail.com>  Sat, 18 Mar 2017 08:33:14 +0300
+
 wasta-multidesktop-xenial (1.1.0) xenial; urgency=medium
 
   * install-files/system: renamed service to wasta-logout

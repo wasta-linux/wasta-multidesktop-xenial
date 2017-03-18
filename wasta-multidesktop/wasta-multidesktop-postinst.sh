@@ -5,10 +5,13 @@
 #
 # This script is automatically run by the postinst configure step on
 #   installation of wasta-multidesktop-setup.  It can be manually re-run, but is
-#   only intended to be run at package installation.  
+#   only intended to be run at package installation.
 #
 # 2015-06-18 rik: initial script
 # 2016-11-14 rik: enabling wasta-multidesktop systemd service
+# 2017-03-18 rik: disabling wasta-logout systemd service: we now use
+#   wasta-login lightdm script to record user session and retrieve it to
+#   compare session to previous session and sync if any change.
 #
 # ==============================================================================
 
@@ -29,10 +32,17 @@ fi
 # Main Processing
 # ------------------------------------------------------------------------------
 
-echo
-echo "*** Enabling wasta-logout systemd service"
-echo
-systemctl enable wasta-logout
+
+#WASTA_SYSTEMD=$(systemctl is-enabled wasta-logout || true);
+
+#if [ "$WASTA_SYSTEMD" == "enabled" ];
+#then
+#    echo
+#    echo "*** DISabling wasta-logout systemd service"
+#    echo
+#    # check status this way: journalctl | grep wasta-logout
+#    systemctl disable wasta-logout || true
+#fi
 
 # ------------------------------------------------------------------------------
 # Finished
