@@ -1,3 +1,11 @@
+wasta-multidesktop-xenial (1.1.2) xenial; urgency=medium
+
+  * wasta-login-wrapper: removing 'at' trigger - user login won't complete
+    until this script finishes now, but since wmctrl not needed to get
+    session anymore the wasta-login script should complete pretty fast.
+
+ -- Rik Shaw <rikshaw76@gmail.com>  Sat, 18 Mar 2017 10:32:26 +0300
+
 wasta-multidesktop-xenial (1.1.1) xenial; urgency=medium
 
   * removing systemd logout script, now wasta-login will log the
