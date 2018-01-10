@@ -41,6 +41,8 @@
 #       wasta-logout systemd script which was difficult to work with).
 #   2017-03-18 rik: this script is no longer triggered by 'at' so user login
 #       won't complete until after this script completes.
+#   2018-01-10 rik: adding gnome-flashback-metacity and gnome-flashback-compiz
+#       sessions to the unity/gnome processing.
 #
 # ==============================================================================
 
@@ -295,10 +297,10 @@ then
         echo "after nemo draw desk again NAUTILUS draw background: $(su $CURR_USER -c 'dbus-launch gsettings get org.gnome.desktop.background draw-background')" | tee -a $LOGFILE
     fi
 
-elif [ "$CURR_SESSION" == "ubuntu" ];
+elif [ "$CURR_SESSION" == "ubuntu" ] || [ "$CURR_SESSION" == "gnome" ] || [ "$CURR_SESSION" == "gnome-flashback-metacity" ] || [ "$CURR_SESSION" == "gnome-flashback-compiz" ];
 then
     # ==========================================================================
-    # ACTIVE SESSION: UNITY (sorry, no XFCE, KDE, or GNOME support right now...)
+    # ACTIVE SESSION: UNITY (sorry, no XFCE, KDE, or MATE support right now...)
     # ==========================================================================
 
     if [ $DEBUG ];
