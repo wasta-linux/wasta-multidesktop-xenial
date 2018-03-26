@@ -43,6 +43,7 @@
 #       won't complete until after this script completes.
 #   2018-01-10 rik: adding gnome-flashback-metacity and gnome-flashback-compiz
 #       sessions to the unity/gnome processing.
+#   2018-03-26 rik: adding cinnamon/gnome-online-accounts-panel processing
 #
 # ==============================================================================
 
@@ -174,6 +175,12 @@ then
     # --------------------------------------------------------------------------
     # SHOW CINNAMON items
 
+    if [ -e /usr/share/applications/cinnamon-online-accounts-panel.desktop ];
+    then
+        desktop-file-edit --remove-key=NoDisplay \
+            /usr/share/applications/cinnamon-online-accounts-panel.desktop || true;
+    fi
+
     if [ -e /usr/share/applications/cinnamon-settings-startup.desktop ];
     then
         desktop-file-edit --remove-key=NoDisplay \
@@ -221,6 +228,12 @@ then
     then
         desktop-file-edit --set-key=NoDisplay --set-value=true \
             /usr/share/applications/alacarte.desktop || true
+    fi
+
+    if [ -e /usr/share/applications/gnome-online-accounts-panel.desktop ];
+    then
+        desktop-file-edit --set-key=NoDisplay --set-value=true \
+            /usr/share/applications/gnome-online-accounts-panel.desktop || true;
     fi
 
     # Gnome Startup Applications
@@ -300,7 +313,7 @@ then
 elif [ "$CURR_SESSION" == "ubuntu" ] || [ "$CURR_SESSION" == "gnome" ] || [ "$CURR_SESSION" == "gnome-flashback-metacity" ] || [ "$CURR_SESSION" == "gnome-flashback-compiz" ];
 then
     # ==========================================================================
-    # ACTIVE SESSION: UNITY (sorry, no XFCE, KDE, or MATE support right now...)
+    # ACTIVE SESSION: UNITY / GNOME (sorry no XFCE, KDE, or MATE support...)
     # ==========================================================================
 
     if [ $DEBUG ];
@@ -330,11 +343,18 @@ then
         fi
     fi
 
+    if [ -e /usr/share/applications/cinnamon-online-accounts-panel.desktop ];
+    then
+        desktop-file-edit --set-key=NoDisplay --set-value=true \
+            /usr/share/applications/cinnamon-online-accounts-panel.desktop || true;
+    fi
+
     if [ -e /usr/share/applications/nemo-compare-preferences.desktop ];
     then
         desktop-file-edit --set-key=NoDisplay --set-value=true \
             /usr/share/applications/nemo-compare-preferences.desktop || true;
     fi
+
     # --------------------------------------------------------------------------
     # UNITY/GNOME Settings
     # --------------------------------------------------------------------------
@@ -343,6 +363,12 @@ then
     then
         desktop-file-edit --remove-key=NoDisplay \
             /usr/share/applications/alacarte.desktop || true;
+    fi
+
+    if [ -e /usr/share/applications/gnome-online-accounts-panel.desktop ];
+    then
+        desktop-file-edit --remove-key=NoDisplay \
+            /usr/share/applications/gnome-online-accounts-panel.desktop || true;
     fi
 
     # Gnome Startup Applications
