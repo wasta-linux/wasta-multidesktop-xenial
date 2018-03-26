@@ -88,15 +88,24 @@ fi
 # ------------------------------------------------------------------------------
 
 # Ensure Nautilus not showing hidden files (power users may be annoyed)
-su "$CURR_USER" -c 'dbus-launch gsettings set org.gnome.nautilus.preferences show-hidden-files false'
+su "$CURR_USER" -c 'dbus-launch gsettings set org.gnome.nautilus.preferences show-hidden-files false' || true;
 
 if [ -x /usr/bin/nemo ];
 then
     # Ensure Nemo not showing hidden files (power users may be annoyed)
-    su "$CURR_USER" -c 'dbus-launch gsettings set org.nemo.preferences show-hidden-files false'
+    su "$CURR_USER" -c 'dbus-launch gsettings set org.nemo.preferences show-hidden-files false' || true;
 
     # Ensure Nemo not showing "location entry" (text entry), but rather "breadcrumbs"
-    su "$CURR_USER" -c 'dbus-launch gsettings set org.nemo.preferences show-location-entry false'
+    su "$CURR_USER" -c 'dbus-launch gsettings set org.nemo.preferences show-location-entry false' || true;
+
+    # Ensure Nemo sorting by name
+    su "$CURR_USER" -c "dbus-launch gsettings set org.nemo.preferences default-sort-order 'name'" || true;
+
+    # Ensure Nemo sidebar showing
+    su "$CURR_USER" -c 'dbus-launch gsettings set org.nemo.window-state start-with-sidebar true' || true;
+
+    # Ensure Nemo sidebar set to 'places'
+    su "$CURR_USER" -c "dbus-launch gsettings set org.nemo.window-state side-pane-view 'places'" || true;
 
     # make sure Nemo autostart disabled (we start it ourselves)
     if [ -e /etc/xdg/autostart/nemo-autostart.desktop ]
@@ -157,7 +166,7 @@ then
     # ==========================================================================
     if [ $DEBUG ];
     then
-        echo "processing based on cinnammon session" | tee -a $LOGFILE
+        echo "processing based on CINNAMON session" | tee -a $LOGFILE
     fi
 
     # Nautilus may be active: kill (will not error if not found)
@@ -221,9 +230,9 @@ then
     fi
 
     # --------------------------------------------------------------------------
-    # UNITY/GNOME Settings
+    # Ubuntu/GNOME Settings
     # --------------------------------------------------------------------------
-    # HIDE UNITY/GNOME items
+    # HIDE Ubuntu/GNOME items
     if [ -e /usr/share/applications/alacarte.desktop ];
     then
         desktop-file-edit --set-key=NoDisplay --set-value=true \
@@ -265,8 +274,8 @@ then
         fi
 
         # Prevent Nautilus from drawing the desktop
-        su "$CURR_USER" -c 'dbus-launch gsettings set org.gnome.desktop.background show-desktop-icons false'
-        su "$CURR_USER" -c 'dbus-launch gsettings set org.gnome.desktop.background draw-background false'
+        su "$CURR_USER" -c 'dbus-launch gsettings set org.gnome.desktop.background show-desktop-icons false' || true;
+        su "$CURR_USER" -c 'dbus-launch gsettings set org.gnome.desktop.background draw-background false' || true;
     fi
 
     if [ -e /usr/share/applications/org.gnome.Nautilus.desktop ];
@@ -275,8 +284,8 @@ then
             /usr/share/applications/org.gnome.Nautilus.desktop || true;
 
         # Prevent Nautilus from drawing the desktop
-        su "$CURR_USER" -c 'dbus-launch gsettings set org.gnome.desktop.background show-desktop-icons false'
-        su "$CURR_USER" -c 'dbus-launch gsettings set org.gnome.desktop.background draw-background false'
+        su "$CURR_USER" -c 'dbus-launch gsettings set org.gnome.desktop.background show-desktop-icons false' || true;
+        su "$CURR_USER" -c 'dbus-launch gsettings set org.gnome.desktop.background draw-background false' || true;
     fi
 
     if [ -e /usr/share/applications/nautilus-compare-preferences.desktop ];
@@ -313,12 +322,12 @@ then
 elif [ "$CURR_SESSION" == "ubuntu" ] || [ "$CURR_SESSION" == "gnome" ] || [ "$CURR_SESSION" == "gnome-flashback-metacity" ] || [ "$CURR_SESSION" == "gnome-flashback-compiz" ];
 then
     # ==========================================================================
-    # ACTIVE SESSION: UNITY / GNOME (sorry no XFCE, KDE, or MATE support...)
+    # ACTIVE SESSION: UBUNTU / GNOME (sorry, no XFCE, KDE, or MATE support yet)
     # ==========================================================================
 
     if [ $DEBUG ];
     then
-        echo "processing based on unity / gnome session" | tee -a $LOGFILE
+        echo "processing based on UBUNTU / GNOME session" | tee -a $LOGFILE
     fi
 
     # --------------------------------------------------------------------------
@@ -356,9 +365,9 @@ then
     fi
 
     # --------------------------------------------------------------------------
-    # UNITY/GNOME Settings
+    # Ubuntu/GNOME Settings
     # --------------------------------------------------------------------------
-    # SHOW UNITY/GNOME Items
+    # SHOW GNOME Items
     if [ -e /usr/share/applications/alacarte.desktop ];
     then
         desktop-file-edit --remove-key=NoDisplay \
