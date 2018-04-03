@@ -44,19 +44,36 @@
 #   2018-01-10 rik: adding gnome-flashback-metacity and gnome-flashback-compiz
 #       sessions to the unity/gnome processing.
 #   2018-03-26 rik: adding cinnamon/gnome-online-accounts-panel processing
+#   2018-04-04 rik: syncing AccountService updates from bionic, but have to
+#       set Background different due to lightdm changes between xenial and
+#       bionic
 #
 # ==============================================================================
 
-DEBUG=""
-CURR_USER=$(grep "User .* authorized" /var/log/lightdm/lightdm.log | \
+CURR_USER=$(grep -a "User .* authorized" /var/log/lightdm/lightdm.log | \
     tail -1 | sed 's@.*User \(.*\) authorized@\1@')
-CURR_SESSION=$(grep "Greeter requests session" /var/log/lightdm/lightdm.log | \
+CURR_SESSION=$(grep -a "Greeter requests session" /var/log/lightdm/lightdm.log | \
     tail -1 | sed 's@.*Greeter requests session \(.*\)@\1@')
 
 mkdir -p /var/log/wasta-multidesktop
 LOGFILE=/var/log/wasta-multidesktop/wasta-login.txt
 PREV_SESSION_FILE=/var/log/wasta-multidesktop/$CURR_USER-prev-session
 PREV_SESSION=$(cat $PREV_SESSION_FILE)
+DEBUG_FILE=/var/log/wasta-multidesktop/wasta-login-debug
+
+if [ -e $DEBUG_FILE ];
+then
+    DEBUG=$(cat $DEBUG_FILE)
+    if [ "$DEBUG" != "YES" ];
+    then
+        DEBUG=""
+    fi
+else
+    # create empty $DEBUG_FILE
+    touch $DEBUG_FILE
+fi
+
+DIR=/usr/share/wasta-multidesktop
 
 if [ $DEBUG ];
 then
@@ -65,22 +82,63 @@ then
     echo "current user: $CURR_USER" | tee -a $LOGFILE
     echo "current session: $CURR_SESSION" | tee -a $LOGFILE
     echo "PREV session for user: $PREV_SESSION" | tee -a $LOGFILE
-    echo "NEMO show desktop icons: $(su $CURR_USER -c 'dbus-launch gsettings get org.nemo.desktop show-desktop-icons')" | tee -a $LOGFILE
+    if [ -x /usr/bin/nemo ];
+    then
+        echo "TOP NEMO show desktop icons: $(su $CURR_USER -c 'dbus-launch gsettings get org.nemo.desktop desktop-layout')" | tee -a $LOGFILE
+    fi
     echo "NAUTILUS show desktop icons: $(su $CURR_USER -c 'dbus-launch gsettings get org.gnome.desktop.background show-desktop-icons')" | tee -a $LOGFILE
     echo "NAUTILUS draw background: $(su $CURR_USER -c 'dbus-launch gsettings get org.gnome.desktop.background draw-background')" | tee -a $LOGFILE
+fi
+
+if ! [ $CURR_USER ];
+then
+    if [ $DEBUG ];
+    then
+        echo "EXITING... no user found" | tee -a $LOGFILE
+    fi
+    exit 0
+fi
+
+if ! [ $CURR_SESSION ];
+then
+    if [ $DEBUG ];
+    then
+        echo "EXITING... no session found" | tee -a $LOGFILE
+    fi
+    exit 0
 fi
 
 # ------------------------------------------------------------------------------
 # Store current backgrounds
 # ------------------------------------------------------------------------------
-CINNAMON_BACKGROUND=$(su "$CURR_USER" -c 'dbus-launch gsettings get org.cinnamon.desktop.background picture-uri')
-GNOME_BACKGROUND=$(su "$CURR_USER" -c 'dbus-launch gsettings get org.gnome.desktop.background picture-uri')
-LIGHTDM_BACKGROUND=$(su "$CURR_USER" -c 'dbus-launch gsettings get com.canonical.unity-greeter background')
+if [ -x /usr/bin/cinnamon ];
+then
+    CINNAMON_BG=$(su "$CURR_USER" -c 'dbus-launch gsettings get org.cinnamon.desktop.background picture-uri' || true;)
+fi
+GNOME_BG=$(su "$CURR_USER" -c 'dbus-launch gsettings get org.gnome.desktop.background picture-uri' || true;)
+
+AS_FILE="/var/lib/AccountsService/users/$CURR_USER"
+
+# Lightdm 1.26 uses a more standardized syntax for storing user backgrounds.
+#   Since individual desktops would need to re-work how to set user backgrounds
+#   for use by lightdm we are doing it manually here to ensure compatiblity
+#   for all desktops
+if ! [ $(grep "Background=" $AS_FILE) ];
+then
+    # Error, so Background needs to be added to AS_FILE
+    sed -i -e "s@\(XSession=.*\)@\1\nBackground=@" $AS_FILE
+fi
+# Retrieve current AccountsService user background
+AS_BG=$(sed -n "s@Background=@@p" $AS_FILE)
+
 if [ $DEBUG ];
 then
-    echo "cinnamon bg: $CINNAMON_BACKGROUND" | tee -a $LOGFILE
-    echo "gnome bg: $GNOME_BACKGROUND" | tee -a $LOGFILE
-    echo "lightdm bg: $LIGHTDM_BACKGROUND" | tee -a $LOGFILE
+    if [ -x /usr/bin/cinnamon ];
+    then
+        echo "cinnamon bg: $CINNAMON_BG" | tee -a $LOGFILE
+    fi
+    echo "gnome bg: $GNOME_BG" | tee -a $LOGFILE
+    echo "as bg: $AS_BG" | tee -a $LOGFILE
 fi
 
 # ------------------------------------------------------------------------------
@@ -88,7 +146,6 @@ fi
 # ------------------------------------------------------------------------------
 
 # Ensure Nautilus not showing hidden files (power users may be annoyed)
-su "$CURR_USER" -c 'dbus-launch gsettings set org.gnome.nautilus.preferences show-hidden-files false' || true;
 
 if [ -x /usr/bin/nemo ];
 then
@@ -137,22 +194,31 @@ then
         echo "Previous Session Cinnamon: Sync TO GNOME" | tee -a $LOGFILE
     fi
     # sync Cinnamon background to GNOME background
-    su "$CURR_USER" -c "dbus-launch gsettings set org.gnome.desktop.background picture-uri $CINNAMON_BACKGROUND"
-    # sync Cinnmaon background to Unity Greeter LightDM background
-    LIGHTDM_BACKGROUND=$(echo $CINNAMON_BACKGROUND | sed 's@file://@@')
-    su "$CURR_USER" -c "dbus-launch gsettings set com.canonical.unity-greeter background $LIGHTDM_BACKGROUND"
-else
-    # apply GNOME settings to Cinnamon
-    if [ $DEBUG ];
+    su "$CURR_USER" -c "dbus-launch gsettings set org.gnome.desktop.background picture-uri $CINNAMON_BG" || true;
+
+    # sync Cinnmaon background to AccountsService background
+    NEW_AS_BG=$(echo $CINNAMON_BG | sed "s@'file://\(.*\)'@\1@" )
+    if [ "$AS_BG" != "$NEW_AS_BG" ];
     then
-        echo "Previous Session NOT Cinnamon: Sync TO Cinnamon" | tee -a $LOGFILE
+        sed -i -e "s@\(Background=\).*@\1$NEW_AS_BG@" $AS_FILE
     fi
-    # sync GNOME background to Cinnamon background
-    su "$CURR_USER" -c "dbus-launch gsettings set org.cinnamon.desktop.background picture-uri $GNOME_BACKGROUND"
-    # sync GNOME background to Unity Greeter LightDM background
-    LIGHTDM_BACKGROUND=$(echo $GNOME_BACKGROUND | sed 's@file://@@')
-    # set LIGHTDM background
-    su "$CURR_USER" -c "dbus-launch gsettings set com.canonical.unity-greeter background $LIGHTDM_BACKGROUND"
+else
+    if [ -x /usr/bin/cinnamon ];
+    then
+        # apply GNOME settings to Cinnamon
+        if [ $DEBUG ];
+        then
+            echo "Previous Session NOT Cinnamon: Sync TO Cinnamon" | tee -a $LOGFILE
+        fi
+        # sync GNOME background to Cinnamon background
+        su "$CURR_USER" -c "dbus-launch gsettings set org.cinnamon.desktop.background picture-uri $GNOME_BG" || true;
+    fi
+    # sync GNOME background to AccountsService background
+    NEW_AS_BG=$(echo $GNOME_BG | sed "s@'file://\(.*\)'@\1@" )
+    if [ "$AS_BG" != "$NEW_AS_BG" ];
+    then
+        sed -i -e "s@\(Background=\).*@\1$NEW_AS_BG@" $AS_FILE
+    fi
 fi
 
 # ------------------------------------------------------------------------------
@@ -202,7 +268,7 @@ then
             /usr/share/applications/nemo.desktop || true;
 
         # allow nemo to draw the desktop
-        su "$CURR_USER" -c 'dbus-launch gsettings set org.nemo.desktop show-desktop-icons true'
+        su "$CURR_USER" -c "dbus-launch gsettings set org.nemo.desktop desktop-layout 'true::false'" || true;
 
         # Ensure Nemo default folder handler
         sed -i \
@@ -236,7 +302,19 @@ then
     if [ -e /usr/share/applications/alacarte.desktop ];
     then
         desktop-file-edit --set-key=NoDisplay --set-value=true \
-            /usr/share/applications/alacarte.desktop || true
+            /usr/share/applications/alacarte.desktop || true;
+    fi
+
+    # Blueman-applet may be active: kill (will not error if not found)
+    if [ "$(pgrep blueman-applet)" ];
+    then
+        killall blueman-applet | tee -a $LOGFILE
+    fi
+
+    if [ -e /usr/share/applications/blueman-manager.desktop ];
+    then
+        desktop-file-edit --set-key=NoDisplay --set-value=true \
+            /usr/share/applications/blueman-manager.desktop || true;
     fi
 
     if [ -e /usr/share/applications/gnome-online-accounts-panel.desktop ];
@@ -374,6 +452,12 @@ then
             /usr/share/applications/alacarte.desktop || true;
     fi
 
+    if [ -e /usr/share/applications/blueman-manager.desktop ];
+    then
+        desktop-file-edit -remove-key=NoDisplay \
+            /usr/share/applications/blueman-manager.desktop || true;
+    fi
+
     if [ -e /usr/share/applications/gnome-online-accounts-panel.desktop ];
     then
         desktop-file-edit --remove-key=NoDisplay \
@@ -399,8 +483,8 @@ then
             /usr/share/applications/nautilus.desktop || true;
 
         # Allow Nautilus to draw the desktop
-        su "$CURR_USER" -c 'dbus-launch gsettings set org.gnome.desktop.background show-desktop-icons true'
-        su "$CURR_USER" -c 'dbus-launch gsettings set org.gnome.desktop.background draw-background true'
+        su "$CURR_USER" -c 'dbus-launch gsettings set org.gnome.desktop.background show-desktop-icons true' || true;
+        su "$CURR_USER" -c 'dbus-launch gsettings set org.gnome.desktop.background draw-background true' || true;
 
         # Ensure Nautilus default folder handler
         sed -i \
@@ -448,7 +532,6 @@ else
 
 fi
 
-
 # ------------------------------------------------------------------------------
 # SET PREV Session file for user
 # ------------------------------------------------------------------------------
@@ -459,11 +542,14 @@ echo $CURR_SESSION > $PREV_SESSION_FILE
 # ------------------------------------------------------------------------------
 if [ $DEBUG ];
 then
-    if [ "$(pidof nemo)" ];
+    if [ -x /usr/bin/nemo ];
     then
-        echo "END: nemo IS running!" | tee -a $LOGFILE
-    else
-        echo "END: nemo NOT running!" | tee -a $LOGFILE
+        if [ "$(pidof nemo)" ];
+        then
+            echo "END: nemo IS running!" | tee -a $LOGFILE
+        else
+            echo "END: nemo NOT running!" | tee -a $LOGFILE
+        fi
     fi
 
     if [ "$(pidof nautilus)" ];
@@ -473,13 +559,19 @@ then
         echo "END: nautilus NOT running!" | tee -a $LOGFILE
     fi
     echo "final settings:" | tee -a $LOGFILE
-    CINNAMON_BACKGROUND_NEW=$(su "$CURR_USER" -c 'dbus-launch gsettings get org.cinnamon.desktop.background picture-uri')
-    GNOME_BACKGROUND_NEW=$(su "$CURR_USER" -c 'dbus-launch gsettings get org.gnome.desktop.background picture-uri')
-    LIGHTDM_BACKGROUND_NEW=$(su "$CURR_USER" -c 'dbus-launch gsettings get com.canonical.unity-greeter background')
-    echo "cinnamon bg NEW: $CINNAMON_BACKGROUND_NEW" | tee -a $LOGFILE
-    echo "gnome bg NEW: $GNOME_BACKGROUND_NEW" | tee -a $LOGFILE
-    echo "lightdm bg NEW: $LIGHTDM_BACKGROUND_NEW" | tee -a $LOGFILE
-    echo "NEMO show desktop icons: $(su $CURR_USER -c 'dbus-launch gsettings get org.nemo.desktop show-desktop-icons')" | tee -a $LOGFILE
+    if [ -x /usr/bin/cinnamon ];
+    then
+        CINNAMON_BG_NEW=$(su "$CURR_USER" -c 'dbus-launch gsettings get org.cinnamon.desktop.background picture-uri')
+        echo "cinnamon bg NEW: $CINNAMON_BG_NEW" | tee -a $LOGFILE
+    fi
+    GNOME_BG_NEW=$(su "$CURR_USER" -c 'dbus-launch gsettings get org.gnome.desktop.background picture-uri')
+    AS_BG_NEW=$(sed -n 's@Background=@@p' $AS_FILE)
+    echo "gnome bg NEW: $GNOME_BG_NEW" | tee -a $LOGFILE
+    echo "as bg NEW: $AS_BG_NEW" | tee -a $LOGFILE
+    if [ -x /usr/bin/nemo ];
+    then
+        echo "NEMO show desktop icons: $(su $CURR_USER -c 'dbus-launch gsettings get org.nemo.desktop desktop-layout')" | tee -a $LOGFILE
+    fi
     echo "NAUTILUS show desktop icons: $(su $CURR_USER -c 'dbus-launch gsettings get org.gnome.desktop.background show-desktop-icons')" | tee -a $LOGFILE
     echo "NAUTILUS draw background: $(su $CURR_USER -c 'dbus-launch gsettings get org.gnome.desktop.background draw-background')" | tee -a $LOGFILE
     echo "$(date) exiting wasta-login" | tee -a $LOGFILE

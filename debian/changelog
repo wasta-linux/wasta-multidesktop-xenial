@@ -1,3 +1,17 @@
+wasta-multidesktop-xenial (1.2.2) xenial; urgency=medium
+
+  * wasta-login.sh: modifying AccountsService background setting as lightdm
+    differences between xenial and bionic require different logic
+
+ -- Rik Shaw <rikshaw76@gmail.com>  Tue, 03 Apr 2018 22:18:54 +0300
+
+wasta-multidesktop-xenial (1.2.1) xenial; urgency=medium
+
+  * wasta-login.sh: syncing AccountsService background setting
+    with wasta-multidesktop-bionic processing
+
+ -- Rik Shaw <rikshaw76@gmail.com>  Tue, 03 Apr 2018 19:17:02 +0300
+
 wasta-multidesktop-xenial (1.2.0) xenial; urgency=medium
 
   * wasta-login: adding cinnamon/gnome-online-accounts-panel
