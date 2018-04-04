@@ -1,3 +1,9 @@
+wasta-multidesktop-xenial (1.2.4) xenial; urgency=medium
+
+  * wasta-login.sh: AccountsService background strip off optional 'file://'
+
+ -- Rik Shaw <rikshaw76@gmail.com>  Wed, 04 Apr 2018 11:41:34 +0300
+
 wasta-multidesktop-xenial (1.2.3) xenial; urgency=medium
 
   * version bump to work around launchpad build error

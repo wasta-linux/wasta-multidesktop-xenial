@@ -47,6 +47,7 @@
 #   2018-04-04 rik: syncing AccountService updates from bionic, but have to
 #       set Background different due to lightdm changes between xenial and
 #       bionic
+#   2018-04-04 rik: AccountsService background strip off optional file://
 #
 # ==============================================================================
 
@@ -197,7 +198,9 @@ then
     su "$CURR_USER" -c "dbus-launch gsettings set org.gnome.desktop.background picture-uri $CINNAMON_BG" || true;
 
     # sync Cinnmaon background to AccountsService background
-    NEW_AS_BG=$(echo $CINNAMON_BG | sed "s@'file://\(.*\)'@\1@" )
+    # strip off file:// (not always present) and single quotes
+    NEW_AS_BG=$(echo $CINNAMON_BG | sed "s@file://@@" | sed "s@'@@g" )
+
     if [ "$AS_BG" != "$NEW_AS_BG" ];
     then
         sed -i -e "s@\(Background=\).*@\1$NEW_AS_BG@" $AS_FILE
@@ -214,7 +217,8 @@ else
         su "$CURR_USER" -c "dbus-launch gsettings set org.cinnamon.desktop.background picture-uri $GNOME_BG" || true;
     fi
     # sync GNOME background to AccountsService background
-    NEW_AS_BG=$(echo $GNOME_BG | sed "s@'file://\(.*\)'@\1@" )
+    # strip off file:// (not always present) and single quotes
+    NEW_AS_BG=$(echo $GNOME_BG | sed "s@file://@@" | sed "s@'@@g" )
     if [ "$AS_BG" != "$NEW_AS_BG" ];
     then
         sed -i -e "s@\(Background=\).*@\1$NEW_AS_BG@" $AS_FILE
