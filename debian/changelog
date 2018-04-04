@@ -1,3 +1,9 @@
+wasta-multidesktop-xenial (1.2.3) xenial; urgency=medium
+
+  * version bump to work around launchpad build error
+
+ -- Rik Shaw <rikshaw76@gmail.com>  Wed, 04 Apr 2018 09:19:45 +0300
+
 wasta-multidesktop-xenial (1.2.2) xenial; urgency=medium
 
   * wasta-login.sh: modifying AccountsService background setting as lightdm
